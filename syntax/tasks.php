@@ -288,4 +288,4 @@ class syntax_plugin_task_tasks extends DokuWiki_Syntax_Plugin {
         return $ret;
     }
 }
-// vim:et:ts=4:sw=4:enc=utf-8:
+// vim:et:ts=4:sw=4:

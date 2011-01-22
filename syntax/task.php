@@ -53,43 +53,30 @@ class syntax_plugin_task_task extends DokuWiki_Syntax_Plugin {
         $match = trim($match, ':!');
         list($user, $date) = explode('?', $match);
     
-        if ($my =& plugin_load('helper', 'task')) {
-            $date = $my->_interpretDate($date);
-      
-            $task = array(
-                    'user'     => array('name' => $user),
-                    'date'     => array('due' => $date),
-                    'priority' => $priority
-                    );
-
-            // save task meta file if changes were made 
-            // but only for already existing tasks or when the page is saved
-            if(@file_exists(metaFN($ID, '.task')) && $ACT == 'save') {
-                $current = $my->readTask($ID);
-                if (($current['user']['name'] != $user) || ($current['date']['due'] != $date) || ($current['priority'] != $priority)) {
-                    $my->writeTask($ID, $task);
-                }
-            } elseif ($ACT == 'save') {
-                $my->writeTask($ID, $task);
-            }
-        }
+         // prepare data
+         $this->_loadHelper();
+         
+         // convert date for metadata and xhtml
+         $date = $this->my->_interpretDate($date);
+         
         return array($user, $date, $priority);
     }      
  
     function render($mode, &$renderer, $data) {  
         global $ID;
-
+		$meta = array();
+         
         list($user, $date, $priority) = $data;
     
+        // get task information for $ID
+        $meta = p_get_metadata($ID, 'plugin_task');
+        
         // XHTML output
         if ($mode == 'xhtml') {
             $renderer->info['cache'] = false;
       
-            // prepare data
-            $this->_loadHelper();
-
             $task = array();
-            if(@file_exists(metaFN($ID, '.task'))) {
+            if(is_array($meta)) {
                 $task = $this->my->readTask($ID);
             }
 
@@ -141,9 +128,26 @@ class syntax_plugin_task_task extends DokuWiki_Syntax_Plugin {
       
         // for metadata renderer
         } elseif ($mode == 'metadata') {
-            return true;
+			if(is_object($this->my)) {
+	            
+	            $task = array(
+	                    'user'     => array('name' => $user),
+	                    'date'     => array('due' => $date),
+	                    'priority' => $priority
+	                    );
+	
+	            // save task meta if changes were made
+	            if(is_array($meta)) {
+	                $current = $this->my->readTask($ID);
+	                if (($current['user']['name'] != $user) || ($current['date']['due'] != $date) || ($current['priority'] != $priority)) {
+	                    $this->my->writeTask($ID, $task);
+	                }
+	            } else {
+	                $this->my->writeTask($ID, $task);
+	            }
+        	}
+        	return true;
         }
-
         return false;
     }
   
@@ -170,7 +174,7 @@ class syntax_plugin_task_task extends DokuWiki_Syntax_Plugin {
         $this->my =& plugin_load('helper', 'task');
         if (!is_object($this->my)) return false;
         $this->task = $this->my->readTask($ID);
-        return $true;
+        return true;
     }
 
     /**
@@ -264,4 +268,4 @@ class syntax_plugin_task_task extends DokuWiki_Syntax_Plugin {
         return '<abbr class="due" title="'.$this->my->_vdate($date, true).'">' . strftime($onlydate, $date) . '</abbr>';
     }
 }
-// vim:ts=4:sw=4:et:enc=utf-8: 
+// vim:ts=4:sw=4:et: 

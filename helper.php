@@ -161,22 +161,14 @@ class helper_plugin_task extends DokuWiki_Plugin {
      * Reads the .task metafile
      */
     function readTask($id) {
-        $file = metaFN($id, '.task');
-        if (!@file_exists($file)) {
-            $data = p_get_metadata($id, 'task');
-            if (is_array($data)) {
-                $data['date'] = array('due' => $data['date']);
-                $data['user'] = array('name' => $data['user']);
-                $meta = array('task' => NULL);
-                if ($this->writeTask($id, $data)) p_set_metadata($id, $meta);
-            }
-        } else {
-            $data = unserialize(io_readFile($file, false));
-        }
-        if (!is_array($data) || empty($data)) return false;
-        $data['file']   = $file;
-        $data['exists'] = true;
-        return $data;
+    	$taskmeta = array();
+    	$taskmeta = p_get_metadata($id, 'plugin_task');
+    	
+    	$data['exists'] = true;	// FIXME - What is this?
+    	
+    	if(!is_array($taskmeta) || empty($taskmeta)) return false;
+    	
+    	return $taskmeta;
     }
 
     /**
@@ -184,27 +176,27 @@ class helper_plugin_task extends DokuWiki_Plugin {
      */
     function writeTask($id, $data) {
         if (!is_array($data)) return false;
-        $file = ($data['file'] ? $data['file'] : metaFN($id, '.task'));
 
-        // remove file and exists keys
-        unset($data['file']);
-        unset($data['exists']);
-
-        // set creation or modification time
-        if (!is_array($data['date'])) $data['date'] = array('due' => $data['date']);
-        if (!@file_exists($file) || !$data['date']['created']) {
-            $data['date']['created'] = time();
+        // Load metadata for task page
+        $meta = array();
+        $meta = p_get_metadata($id);
+        
+        if(!is_array($data['date'])) $data['date'] = array('due' => $data['date']);	// Create an array for the date value
+        
+        if(!is_array($meta['plugin_task']) || !$data['date']['created']) {	// Decide if an existing tasks is modified or a new has been generated
+        	$data['date']['created'] = time();
         } else {
-            $data['date']['modified'] = time();
+        	$data['date']['modified'] = time();
         }
-
-        if (!is_array($data['user'])) $data['user'] = array('name' => $data['user']);
-
-        if (!isset($data['status'])) {    // make sure we don't overwrite status
-            $current = unserialize(io_readFile($file, false));
-            $data['status'] = $current['status'];
-        } elseif ($data['status'] == 3) { // set task completion time
-            $data['date']['completed'] = time();
+        
+        // FIXME - $data['user'] is always empty
+        if(!is_array($data['user'])) $data['user'] = array('name' => $data['user']);	// Create an array for the user value
+        
+        if(!isset($data['status'])) {			// Grep old stored status value and store it in $data or its a new task (then status is uninitialized)
+        	$current = $meta['plugin_task'];
+        	$data['status'] = $current['status'];
+        }elseif ($data['status'] == 3) {		// Task completed, set finish time
+        	$data['date']['completed'] = time();
         }
 
         // generate vtodo for iCal file download
@@ -212,13 +204,14 @@ class helper_plugin_task extends DokuWiki_Plugin {
 
         // generate sortkey with priority and creation date
         $data['key'] = chr($data['priority'] + 97).(2000000000 - $data['date']['created']);
-
-        // save task metadata
-        $ok = io_saveFile($file, serialize($data));
-
-        // and finally notify users
+        
+        // Notify users who are related to this task
         $this->_notify($data);
-        return $ok;
+        
+        $meta['plugin_task'] = $data;
+        $ok = p_set_metadata($id, $meta);
+        
+        return $ok;         
     }
 
     /**
@@ -430,4 +423,4 @@ class helper_plugin_task extends DokuWiki_Plugin {
         else return 'PRIVATE';
     }
 }
-// vim:ts=4:sw=4:et:enc=utf-8:
+// vim:ts=4:sw=4:et:
