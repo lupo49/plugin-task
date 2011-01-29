@@ -161,7 +161,7 @@ class helper_plugin_task extends DokuWiki_Plugin {
      * Reads the .task metafile
      */
     function readTask($id) {
-    	$taskmeta = array();
+    	$taskmeta = array();    	
     	$taskmeta = p_get_metadata($id, 'plugin_task');
     	
     	$data['exists'] = true;	// FIXME - What is this?

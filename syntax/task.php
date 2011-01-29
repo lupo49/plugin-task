@@ -64,7 +64,9 @@ class syntax_plugin_task_task extends DokuWiki_Syntax_Plugin {
  
     function render($mode, &$renderer, $data) {  
         global $ID;
-		$meta = array();
+        
+		// prepare data
+        $this->_loadHelper();
          
         list($user, $date, $priority) = $data;
     

@@ -206,11 +206,11 @@ class action_plugin_task extends DokuWiki_Action_Plugin {
                     );
         }
 
-        // save .task meta file and clear xhtml cache
+        // save task meta and clear xhtml cache
         $task['status'] = $status;
         $my->writeTask($ID, $task);
         $_REQUEST['purge'] = true;
         return 'show';
     }
 }
-// vim:ts=4:sw=4:et:enc=utf-8:
+// vim:ts=4:sw=4:et:
