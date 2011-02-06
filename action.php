@@ -11,7 +11,7 @@ if(!defined('DOKU_PLUGIN')) define('DOKU_PLUGIN',DOKU_INC.'lib/plugins/');
 require_once(DOKU_PLUGIN.'action.php');
 
 class action_plugin_task extends DokuWiki_Action_Plugin {
-
+	
     /**
      * return some info
      */
@@ -30,11 +30,8 @@ class action_plugin_task extends DokuWiki_Action_Plugin {
      * register the eventhandlers
      */
     function register(&$contr) {
-        $contr->register_hook('ACTION_ACT_PREPROCESS',
-                            'BEFORE',
-                            $this,
-                            'handle_act_preprocess',
-                            array());
+        $contr->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_act_preprocess', array());
+        $contr->register_hook('PARSER_METADATA_RENDER', 'BEFORE', $this, 'parser_metadata_render', array());
     }
 
     /**
@@ -56,6 +53,13 @@ class action_plugin_task extends DokuWiki_Action_Plugin {
                 $event->data = $this->_changeTask();
                 break;
         }
+    }
+    
+    function parser_metadata_render(&$event, $param) {
+    	// Save the new task status in metasystem
+    	
+    	//var_dump($event);
+    	//var_dump($event->data['current']['plugin_task']);
     }
 
     /**
@@ -160,7 +164,7 @@ class action_plugin_task extends DokuWiki_Action_Plugin {
     function _changeTask() {
         global $ID;
         global $INFO;
-
+        
         $status = $_REQUEST['status'];
         if (!is_numeric($status) || ($status < -1) || ($status > 4)) return 'show'; // invalid
 
@@ -210,6 +214,10 @@ class action_plugin_task extends DokuWiki_Action_Plugin {
         $task['status'] = $status;
         $my->writeTask($ID, $task);
         $_REQUEST['purge'] = true;
+        
+        // FIXME - $task  must be stored also in renderer metadata 
+        // -> function parser_metadata_render
+        
         return 'show';
     }
 }

@@ -142,10 +142,10 @@ class syntax_plugin_task_task extends DokuWiki_Syntax_Plugin {
 	            if(is_array($meta)) {
 	                $current = $this->my->readTask($ID);
 	                if (($current['user']['name'] != $user) || ($current['date']['due'] != $date) || ($current['priority'] != $priority)) {
-	                    $this->my->writeTask($ID, $task);
+	                    $this->my->writeTask($ID, $task, $renderer);
 	                }
 	            } else {
-	                $this->my->writeTask($ID, $task);
+	                $this->my->writeTask($ID, $task, $renderer);
 	            }
         	}
         	return true;

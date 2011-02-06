@@ -158,7 +158,7 @@ class helper_plugin_task extends DokuWiki_Plugin {
     }
 
     /**
-     * Reads the .task metafile
+     * Reads the task metadata
      */
     function readTask($id) {
     	$taskmeta = array();    	
@@ -172,14 +172,13 @@ class helper_plugin_task extends DokuWiki_Plugin {
     }
 
     /**
-     * Saves the .task metafile
+     * Saves the task metadata
      */
-    function writeTask($id, $data) {
+    function writeTask($id, $data, &$renderer = NULL) {
         if (!is_array($data)) return false;
 
         // Load metadata for task page
-        $meta = array();
-        $meta = p_get_metadata($id);
+        $meta = $renderer->meta;
         
         if(!is_array($data['date'])) $data['date'] = array('due' => $data['date']);	// Create an array for the date value
         
@@ -189,7 +188,6 @@ class helper_plugin_task extends DokuWiki_Plugin {
         	$data['date']['modified'] = time();
         }
         
-        // FIXME - $data['user'] is always empty
         if(!is_array($data['user'])) $data['user'] = array('name' => $data['user']);	// Create an array for the user value
         
         if(!isset($data['status'])) {			// Grep old stored status value and store it in $data or its a new task (then status is uninitialized)
@@ -208,8 +206,13 @@ class helper_plugin_task extends DokuWiki_Plugin {
         // Notify users who are related to this task
         $this->_notify($data);
         
+        // Save task information in meta array
         $meta['plugin_task'] = $data;
-        $ok = p_set_metadata($id, $meta);
+        
+        // Resave all meta in renderer object
+        $renderer->meta = $meta;
+        // Don't overwrite the entire persistent array
+        $renderer->persistent['plugin_task'] = $meta['plugin_task'];
         
         return $ok;         
     }
