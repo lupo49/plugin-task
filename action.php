@@ -31,7 +31,6 @@ class action_plugin_task extends DokuWiki_Action_Plugin {
      */
     function register(&$contr) {
         $contr->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_act_preprocess', array());
-        $contr->register_hook('PARSER_METADATA_RENDER', 'BEFORE', $this, 'parser_metadata_render', array());
     }
 
     /**
@@ -53,13 +52,6 @@ class action_plugin_task extends DokuWiki_Action_Plugin {
                 $event->data = $this->_changeTask();
                 break;
         }
-    }
-    
-    function parser_metadata_render(&$event, $param) {
-    	// Save the new task status in metasystem
-    	
-    	//var_dump($event);
-    	//var_dump($event->data['current']['plugin_task']);
     }
 
     /**
@@ -212,11 +204,13 @@ class action_plugin_task extends DokuWiki_Action_Plugin {
 
         // save task meta and clear xhtml cache
         $task['status'] = $status;
-        $my->writeTask($ID, $task);
+        //$my->writeTask($ID, $task);
         $_REQUEST['purge'] = true;
         
         // FIXME - $task  must be stored also in renderer metadata 
-        // -> function parser_metadata_render
+        $meta = p_get_metadata($ID);
+        $meta['plugin_task'] = $task;
+		p_set_metadata($ID, $meta);
         
         return 'show';
     }
